@@ -136,7 +136,7 @@ Mat Warper::SimilarityAlign(vector<Point2f> *src_v, vector<Point2f> *dst_v)
 }
 
 /*
-
+*/
 vector<Mat> Warper::AlignColor(Mat& img1, vector<Triangle> &ts1, Mat& img2, vector<Triangle> &ts2)
 {
 	int n = ts1.size();
@@ -277,9 +277,9 @@ vector<Mat> Warper::AlignColor(Mat& img1, vector<Triangle> &ts1, Mat& img2, vect
 	//}
 	return transforms;
 }
-*/
 
-vector<Mat> Warper::AlignColor(Mat& img1, vector<Triangle> &ts1, Mat& img2, vector<Triangle> &ts2)
+
+vector<Mat> Warper::NewAlignColor(Mat& img1, vector<Triangle> &ts1, Mat& img2, vector<Triangle> &ts2)
 {
 	int n = ts1.size();
 	vector<Mat> transforms;
@@ -320,13 +320,12 @@ vector<Mat> Warper::AlignColor(Mat& img1, vector<Triangle> &ts1, Mat& img2, vect
 	}
 	calcCovarMatrix(&pixels1[0], pixels1.size(), C1, m1, CV_COVAR_NORMAL);
 	C1 = C1/(pixels1.size()-1);
-	calcCovarMatrix(&pixels2[0], pixels2.size(), C2, m2, CV_COVAR_NORMAL); 
+	calcCovarMatrix(&pixels2[0], pixels2.size(), C2, m2, CV_COVAR_NORMAL);
 	C2 = C2/(pixels2.size()-1);
+
 	Mat Tt1(4, 4, CV_32F, Scalar(0));
-	Mat Tr1(4, 4, CV_32F, Scalar(0));
 	Mat Ts1(4, 4, CV_32F, Scalar(0));
 	Mat Tt2(4, 4, CV_32F, Scalar(0));
-	Mat Tr2(4, 4, CV_32F, Scalar(0));
 	Tt1.at<float>(0,0) = 1.0f;
 	Tt1.at<float>(1,1) = 1.0f;
 	Tt1.at<float>(2,2) = 1.0f;
@@ -334,7 +333,6 @@ vector<Mat> Warper::AlignColor(Mat& img1, vector<Triangle> &ts1, Mat& img2, vect
 	Tt1.at<float>(1,3) = -(float)m1.at<double>(0,1);
 	Tt1.at<float>(2,3) = -(float)m1.at<double>(0,2);
 	Tt1.at<float>(3,3) = 1.0f;
-	cout << "Tt1 = " << Tt1 << endl;
 	Tt2.at<float>(0,0) = 1.0f;
 	Tt2.at<float>(1,1) = 1.0f;
 	Tt2.at<float>(2,2) = 1.0f;
@@ -342,37 +340,15 @@ vector<Mat> Warper::AlignColor(Mat& img1, vector<Triangle> &ts1, Mat& img2, vect
 	Tt2.at<float>(1,3) = (float)m2.at<double>(0,1);
 	Tt2.at<float>(2,3) = (float)m2.at<double>(0,2);
 	Tt2.at<float>(3,3) = 1.0f;
-	cout << "Tt2 = " << Tt2 << endl;
-	Tr1.at<float>(0,0) = (float)evec1.at<double>(0, 0);
-	Tr1.at<float>(0,1) = (float)evec1.at<double>(0, 1);
-	Tr1.at<float>(0,2) = (float)evec1.at<double>(0, 2);
-	Tr1.at<float>(1,0) = (float)evec1.at<double>(1, 0);
-	Tr1.at<float>(1,1) = (float)evec1.at<double>(1, 1);
-	Tr1.at<float>(1,2) = (float)evec1.at<double>(1, 2);
-	Tr1.at<float>(2,0) = (float)evec1.at<double>(2, 0);
-	Tr1.at<float>(2,1) = (float)evec1.at<double>(2, 1);
-	Tr1.at<float>(2,2) = (float)evec1.at<double>(2, 2);
-	Tr1.at<float>(3,3) = 1.0f;
-	cout << "Tr1 = " << Tr1 << endl;
-	Tr2.at<float>(0,0) = (float)evec2.at<double>(0, 0);
-	Tr2.at<float>(1,0) = (float)evec2.at<double>(0, 1);
-	Tr2.at<float>(2,0) = (float)evec2.at<double>(0, 2);
-	Tr2.at<float>(0,1) = (float)evec2.at<double>(1, 0);
-	Tr2.at<float>(1,1) = (float)evec2.at<double>(1, 1);
-	Tr2.at<float>(2,1) = (float)evec2.at<double>(1, 2);
-	Tr2.at<float>(0,2) = (float)evec2.at<double>(2, 0);
-	Tr2.at<float>(1,2) = (float)evec2.at<double>(2, 1);
-	Tr2.at<float>(2,2) = (float)evec2.at<double>(2, 2);
-	Tr2.at<float>(3,3) = 1.0f;
-	cout << "Tr2 = " << Tr2 << endl;
-	Ts1.at<float>(0,0) = (float)sqrt(eval2.at<double>(0, 0)/eval1.at<double>(0, 0));
-	Ts1.at<float>(1,1) = (float)sqrt(eval2.at<double>(1, 0)/eval1.at<double>(1, 0));
-	Ts1.at<float>(2,2) = (float)sqrt(eval2.at<double>(2, 0)/eval1.at<double>(2, 0));
+	Ts1.at<float>(0,0) = (float)sqrt(C2.at<double>(0, 0)/C1.at<double>(0, 0));
+	Ts1.at<float>(1,1) = (float)sqrt(C2.at<double>(1, 0)/C1.at<double>(1, 0));
+	Ts1.at<float>(2,2) = (float)sqrt(C2.at<double>(2, 0)/C1.at<double>(2, 0));
 	Ts1.at<float>(3,3) = 1.0f;
-	cout << "Ts1 = " << Ts1 << endl;
-	Mat T = Tt2*Tr2.t()*Ts1*Tr1*Tt1;
+	Mat T = Tt2*Ts1*Tt1;
+	cout << Tt2 << endl;
+	cout << Ts1 << endl;
+	cout << Tt1 << endl;
 	cout << T << endl;
-	cout << T.inv() << endl;
 	transforms.push_back(T);
 	//for (int j=0; j<(int)pixels1.size(); j++) {
 	//	int x = (int)coordinates[j].x;

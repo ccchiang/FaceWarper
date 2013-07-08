@@ -10,10 +10,10 @@
 #include <opencv2\objdetect\objdetect.hpp>
 #include <vector>
 #define N_FEATURES 4
-#define FACE 0
-#define EYE 1
-#define NOSE 2
-#define MOUTH 3
+#define FACE_RGN 0
+#define EYE_RGN 1
+#define NOSE_RGN 2
+#define MOUTH_RGN 3
 
 using namespace std;
 using namespace cv;

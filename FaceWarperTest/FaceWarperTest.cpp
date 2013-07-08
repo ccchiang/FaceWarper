@@ -95,7 +95,6 @@ int main(int argc, char ** argv)
 
 
 /* Testing Facial Feature Detection and Alignment 
-*/
 	string src0 = "d001"; //來源人臉檔名
 	string dst0 = "mean"; //來源人臉檔名
 	Mat img = imread(src0+".jpg");
@@ -150,12 +149,14 @@ int main(int argc, char ** argv)
 	cout << raft << endl;
 	namedWindow("Aligned");
 	imshow("Aligned", aligned_img);
+*/
 
 
 /* Testing the face surgery
+*/
 	ifstream ifs;
 	string src = "c001"; //來源人臉檔名
-	string dst = "a001"; //目的人臉檔名
+	string dst = "d001"; //目的人臉檔名
 	ifs.open(dst+".txt"); //讀入目的人臉頂點座標檔案(一個人臉)
 	Point2f v1[NO_OF_VERTICES], v2[NO_OF_VERTICES];
 	for (int i=0;i<NO_OF_VERTICES;i++) {
@@ -176,7 +177,7 @@ int main(int argc, char ** argv)
 	FC fcg[][5] = {{ALL}, {SKIN}, {LEYE, REYE, NOSE, MOUTH}}; //人臉五官群組表
 	vector<Triangle> skin_tris1 = src_face.getFCTriangles(fcg[2], 4); //先指定用來做膚色調整的來源人臉三角格陣列
 	vector<Triangle> skin_tris2 = dst_face.getFCTriangles(fcg[2], 4); //再指定用來做膚色調整的目的人臉三角格陣列
-	vector<Mat> Ts = w.AlignColor(src_face.base_img, skin_tris1, dst_face.base_img, skin_tris2); //利用上面二組三角格陣列中的三角格所包含的像素估測膚色，並直接調整來源人臉的膚色
+	vector<Mat> Ts = w.NewAlignColor(src_face.base_img, skin_tris1, dst_face.base_img, skin_tris2); //利用上面二組三角格陣列中的三角格所包含的像素估測膚色，並直接調整來源人臉的膚色
 	cout << Ts[0] << endl;
 	vector<Triangle> all_tris = src_face.getFCTriangles(fcg[0], 1); //再指定用來做膚色調整的目的人臉三角格陣列
 	Mat new_skin_img = w.ReColorSkin(Ts[0], all_tris, &src_face.base_img);
@@ -185,6 +186,11 @@ int main(int argc, char ** argv)
 	Face out_face = w.Surgery(new_src_face, dst_face, affine); //進行虛擬整形
 	int new_width = src_face.base_img.cols*2/3;
 	int new_height = src_face.base_img.rows*2/3;
+	namedWindow("Recolored Src");
+	moveWindow("Recolored Src", new_width, new_height);
+	Mat t0_img;
+	resize(new_src_face.base_img, t0_img, Size(new_width, new_height));
+	imshow("Recolored Src", t0_img);
 	namedWindow("Src");
 	moveWindow("Src", 0, new_height);
 	Mat t1_img;
@@ -207,7 +213,7 @@ int main(int argc, char ** argv)
 	imshow("Out", t3_img);
 	//namedWindow("TriOut");
 	//imshow("TriOut", out_face.tri_img);
-*/
+
 
 /* Generating a mean face texture 
 	ifstream ifs;
