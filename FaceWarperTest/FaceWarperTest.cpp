@@ -155,8 +155,8 @@ int main(int argc, char ** argv)
 /* Testing the face surgery
 */
 	ifstream ifs;
-	string src = "c001"; //來源人臉檔名
-	string dst = "d001"; //目的人臉檔名
+	string src = "d001"; //來源人臉檔名
+	string dst = "c001"; //目的人臉檔名
 	ifs.open(dst+".txt"); //讀入目的人臉頂點座標檔案(一個人臉)
 	Point2f v1[NO_OF_VERTICES], v2[NO_OF_VERTICES];
 	for (int i=0;i<NO_OF_VERTICES;i++) {
