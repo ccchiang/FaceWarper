@@ -136,7 +136,7 @@ Mat Warper::SimilarityAlign(vector<Point2f> *src_v, vector<Point2f> *dst_v)
 }
 
 /*
-*/
+
 vector<Mat> Warper::AlignColor(Mat& img1, vector<Triangle> &ts1, Mat& img2, vector<Triangle> &ts2)
 {
 	int n = ts1.size();
@@ -210,6 +210,118 @@ vector<Mat> Warper::AlignColor(Mat& img1, vector<Triangle> &ts1, Mat& img2, vect
 	cout << "vec2 = " << evec2 << endl;
 	cout << "val2 = " << eval2 << endl;
 	cout << "m2 = " << m2 << endl;
+	Mat Tt1(4, 4, CV_32F, Scalar(0));
+	Mat Tr1(4, 4, CV_32F, Scalar(0));
+	Mat Ts1(4, 4, CV_32F, Scalar(0));
+	Mat Tt2(4, 4, CV_32F, Scalar(0));
+	Mat Tr2(4, 4, CV_32F, Scalar(0));
+	Tt1.at<float>(0,0) = 1.0f;
+	Tt1.at<float>(1,1) = 1.0f;
+	Tt1.at<float>(2,2) = 1.0f;
+	Tt1.at<float>(0,3) = -(float)m1.at<double>(0,0);
+	Tt1.at<float>(1,3) = -(float)m1.at<double>(0,1);
+	Tt1.at<float>(2,3) = -(float)m1.at<double>(0,2);
+	Tt1.at<float>(3,3) = 1.0f;
+	cout << "Tt1 = " << Tt1 << endl;
+	Tt2.at<float>(0,0) = 1.0f;
+	Tt2.at<float>(1,1) = 1.0f;
+	Tt2.at<float>(2,2) = 1.0f;
+	Tt2.at<float>(0,3) = (float)m2.at<double>(0,0);
+	Tt2.at<float>(1,3) = (float)m2.at<double>(0,1);
+	Tt2.at<float>(2,3) = (float)m2.at<double>(0,2);
+	Tt2.at<float>(3,3) = 1.0f;
+	cout << "Tt2 = " << Tt2 << endl;
+	Tr1.at<float>(0,0) = (float)evec1.at<double>(0, 0);
+	Tr1.at<float>(0,1) = (float)evec1.at<double>(0, 1);
+	Tr1.at<float>(0,2) = (float)evec1.at<double>(0, 2);
+	Tr1.at<float>(1,0) = (float)evec1.at<double>(1, 0);
+	Tr1.at<float>(1,1) = (float)evec1.at<double>(1, 1);
+	Tr1.at<float>(1,2) = (float)evec1.at<double>(1, 2);
+	Tr1.at<float>(2,0) = (float)evec1.at<double>(2, 0);
+	Tr1.at<float>(2,1) = (float)evec1.at<double>(2, 1);
+	Tr1.at<float>(2,2) = (float)evec1.at<double>(2, 2);
+	Tr1.at<float>(3,3) = 1.0f;
+	cout << "Tr1 = " << Tr1 << endl;
+	Tr2.at<float>(0,0) = (float)evec2.at<double>(0, 0);
+	Tr2.at<float>(1,0) = (float)evec2.at<double>(0, 1);
+	Tr2.at<float>(2,0) = (float)evec2.at<double>(0, 2);
+	Tr2.at<float>(0,1) = (float)evec2.at<double>(1, 0);
+	Tr2.at<float>(1,1) = (float)evec2.at<double>(1, 1);
+	Tr2.at<float>(2,1) = (float)evec2.at<double>(1, 2);
+	Tr2.at<float>(0,2) = (float)evec2.at<double>(2, 0);
+	Tr2.at<float>(1,2) = (float)evec2.at<double>(2, 1);
+	Tr2.at<float>(2,2) = (float)evec2.at<double>(2, 2);
+	Tr2.at<float>(3,3) = 1.0f;
+	cout << "Tr2 = " << Tr2 << endl;
+	Ts1.at<float>(0,0) = (float)sqrt(eval2.at<double>(0, 0)/eval1.at<double>(0, 0));
+	Ts1.at<float>(1,1) = (float)sqrt(eval2.at<double>(1, 0)/eval1.at<double>(1, 0));
+	Ts1.at<float>(2,2) = (float)sqrt(eval2.at<double>(2, 0)/eval1.at<double>(2, 0));
+	Ts1.at<float>(3,3) = 1.0f;
+	cout << "Ts1 = " << Ts1 << endl;
+	Mat T = Tt2*Tr2.t()*Ts1*Tr1*Tt1;
+	cout << T << endl;
+	cout << T.inv() << endl;
+	transforms.push_back(T);
+	//for (int j=0; j<(int)pixels1.size(); j++) {
+	//	int x = (int)coordinates[j].x;
+	//	int y = (int)coordinates[j].y;
+	//	Mat color(4, 1, CV_32F);
+	//	color.at<float>(0,0) = (float)pixels1[j].at<double>(0,0);//(float)tmp_img.at<Vec3b>(y,x)[0];////img1.at<Vec3b>(y,x)[0];
+	//	color.at<float>(1,0) = (float)pixels1[j].at<double>(0,1);//(float)tmp_img.at<Vec3b>(y,x)[1];//
+	//	color.at<float>(2,0) = (float)pixels1[j].at<double>(0,2);//(float)tmp_img.at<Vec3b>(y,x)[2];//
+	//	color.at<float>(3,0) = 1.0f;
+	//	Mat new_color = T*color;	
+	//	img1.at<Vec3b>(y,x)[0] = saturate_cast<uchar>(new_color.at<float>(0,0));
+	//	img1.at<Vec3b>(y,x)[1] = saturate_cast<uchar>(new_color.at<float>(1,0));
+	//	img1.at<Vec3b>(y,x)[2] = saturate_cast<uchar>(new_color.at<float>(2,0));
+	//}
+	return transforms;
+}
+*/
+
+vector<Mat> Warper::AlignColor(Mat& img1, vector<Triangle> &ts1, Mat& img2, vector<Triangle> &ts2)
+{
+	int n = ts1.size();
+	vector<Mat> transforms;
+	Mat C1, C2;
+	Mat m1, m2;
+	Mat evec1, evec2;
+	Mat eval1, eval2;
+	vector<Mat> pixels1, pixels2;
+	vector<Point2d> coordinates;
+	Mat tmp_img(img1);
+	for (int i=0;i<n;i++) {
+		int min_y1 = (int)ts1[i].getMinY();
+		int max_y1 = (int)ts1[i].getMaxY();
+		int min_y2 = (int)ts2[i].getMinY();
+		int max_y2 = (int)ts2[i].getMaxY();
+		float left, right;
+		for (int y=min_y1; y<=max_y1; y++) {
+			FindLRBndry((float)y, ts1[i], &left, &right);
+			for (int x=(int)left; x<=(int)right; x++) {
+				Mat p(1, 3, CV_64F);
+				p.at<double>(0,0) = img1.at<Vec3b>(y, x)[0];
+				p.at<double>(0,1) = img1.at<Vec3b>(y, x)[1];
+				p.at<double>(0,2) = img1.at<Vec3b>(y, x)[2];
+				pixels1.push_back(p);
+				coordinates.push_back(Point2d((int)x, y));
+			}
+		}
+		for (int y=min_y2; y<=max_y2; y++) {
+			FindLRBndry((float)y, ts2[i], &left, &right);
+			for (int x=(int)left; x<=(int)right; x++) {
+				Mat p(1, 3, CV_64F);
+				p.at<double>(0,0) = img2.at<Vec3b>(y, x)[0];
+				p.at<double>(0,1) = img2.at<Vec3b>(y, x)[1];
+				p.at<double>(0,2) = img2.at<Vec3b>(y, x)[2];
+				pixels2.push_back(p);
+			}
+		}
+	}
+	calcCovarMatrix(&pixels1[0], pixels1.size(), C1, m1, CV_COVAR_NORMAL);
+	C1 = C1/(pixels1.size()-1);
+	calcCovarMatrix(&pixels2[0], pixels2.size(), C2, m2, CV_COVAR_NORMAL); 
+	C2 = C2/(pixels2.size()-1);
 	Mat Tt1(4, 4, CV_32F, Scalar(0));
 	Mat Tr1(4, 4, CV_32F, Scalar(0));
 	Mat Ts1(4, 4, CV_32F, Scalar(0));
