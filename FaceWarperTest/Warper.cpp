@@ -1,6 +1,7 @@
 #include <set>
 #include "StdAfx.h"
 #include "Warper.h"
+#include <cmath>
 
 extern int FC_Vertices[9][64];
 //FC AlignGroups[][5]={
@@ -768,4 +769,82 @@ Mat Warper::ReColorSkin(Mat &T, vector<Triangle>ts, Mat* face_img)
 		}
 	}
 	return tmp_img;
+}
+
+void Warper::BuildSkinModel(vector<Triangle>ts, Mat* face_img, Mat &mean, Mat& cov) 
+{
+	int n = ts.size();
+	vector<Mat> pixels;
+	Mat tmp_img = face_img->clone();
+	for (int i=0;i<n;i++) {
+		int min_y1 = (int)ts[i].getMinY();
+		int max_y1 = (int)ts[i].getMaxY();
+		float left, right;
+		for (int y=min_y1; y<=max_y1; y++) {
+			FindLRBndry((float)y, ts[i], &left, &right);
+			for (int x=(int)left; x<=(int)right; x++) {
+				Mat p(1, 3, CV_64F);
+				p.at<double>(0,0) = tmp_img.at<Vec3b>(y, x)[0];
+				p.at<double>(0,1) = tmp_img.at<Vec3b>(y, x)[1];
+				p.at<double>(0,2) = tmp_img.at<Vec3b>(y, x)[2];
+				pixels.push_back(p);
+			}
+		}
+	}
+	calcCovarMatrix(&pixels[0], pixels.size(), cov, mean, CV_COVAR_NORMAL);
+	cov = cov/(pixels.size()-1);
+}
+
+Mat Warper::ExtractSkin(Mat faceimg, Rect& roi, Mat& mean, Mat& cov, Mat& prob, double th)
+{
+	Mat mask(faceimg.rows, faceimg.cols, CV_8U, Scalar(0));
+	for (int r=roi.y; r<roi.y+roi.height;r++) {
+		for (int c=roi.x; c<roi.x+roi.width;c++) {
+			double p1 = (double)faceimg.at<Vec3b>(r, c)[0];
+			double p2 = (double)faceimg.at<Vec3b>(r, c)[1];
+			double p3 = (double)faceimg.at<Vec3b>(r, c)[2];
+			double d1 = (p1-mean.at<double>(0,0));
+			double d2 = (p1-mean.at<double>(0,0));
+			double d3 = (p1-mean.at<double>(0,0));
+			double prob1 = exp(-d1*d1/2/cov.at<double>(0,0))/sqrt(cov.at<double>(0,0));
+			double prob2 = exp(-d2*d2/2/cov.at<double>(1,1))/sqrt(cov.at<double>(1,1));
+			double prob3 = exp(-d3*d3/2/cov.at<double>(2,2))/sqrt(cov.at<double>(2,2));
+			prob.at<double>(r, c) = prob1*prob2*prob3;
+			mask.at<uchar>(r,c) = prob.at<double>(r, c)>th?255:0;
+		}
+	}
+	return mask;
+}
+
+Rect Warper::FindBoundary(vector<Triangle>ts)
+{
+	int minx=9999, maxx=0, miny=9999, maxy=0;
+	for (int i=0;i<(int)ts.size();i++) {
+		for (int j=0;j<3;j++) {
+			if (ts[i].getVertex(j).x>maxx)
+				maxx = (int)ts[i].getVertex(j).x;
+			if (ts[i].getVertex(j).x<minx)
+				minx = (int)ts[i].getVertex(j).x;
+			if (ts[i].getVertex(j).y>maxy)
+				maxy = (int)ts[i].getVertex(j).y;
+			if (ts[i].getVertex(j).y<miny)
+				miny = (int)ts[i].getVertex(j).y;
+		}
+	}
+	return Rect(Point(minx,miny),Point(maxx,maxy));
+}
+
+void Warper::RemoveTrianglePixels(Mat& mask, vector<Triangle>ts)
+{
+	int n = ts.size();
+	for (int i=0;i<n;i++) {
+		int min_y1 = (int)ts[i].getMinY();
+		int max_y1 = (int)ts[i].getMaxY();
+		float left, right;
+		for (int y=min_y1; y<=max_y1; y++) {
+			FindLRBndry((float)y, ts[i], &left, &right);
+			for (int x=(int)left; x<=(int)right; x++)
+				mask.at<uchar>(y,x) = 0;
+		}
+	}
 }

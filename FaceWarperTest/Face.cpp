@@ -245,7 +245,7 @@ void Face::readImg(string filename)
 	base_img = imread(filename);
 }
 
-void Face::drawTriangles(vector<Triangle>& tris)
+Mat Face::drawTriangles(vector<Triangle>& tris)
 {
 	int n_triangles = tris.size();
 	tri_img = base_img.clone();
@@ -260,4 +260,5 @@ void Face::drawTriangles(vector<Triangle>& tris)
 					   tris[i].getVertex(2),
 					   Scalar(0, 0, 255));
 	}
+	return tri_img;
 }

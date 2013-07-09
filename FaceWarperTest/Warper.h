@@ -42,5 +42,9 @@ public:
 																							   //將img1上的像素顏色套上T後可得與img2上顏色相近的顏色 T*c1 ==> c2
 	vector<Mat> AlignColorLMS(Mat& img1, vector<Triangle> &ts1, Mat& img2, vector<Triangle> &ts2);
 	Mat ReColorSkin(Mat &T, vector<Triangle>ts, Mat* face_img); //利用色彩轉換矩陣轉換face_img中三角格陣列所涵蓋區域的像素色彩並回傳一個新的人臉影像
+	void BuildSkinModel(vector<Triangle>ts, Mat* face_img, Mat &mean, Mat& cov);
+	Mat ExtractSkin(Mat faceimg, Rect& roi, Mat& mean, Mat& cov, Mat& prob, double th);
+	Rect FindBoundary(vector<Triangle>ts);
+	void RemoveTrianglePixels(Mat& mask, vector<Triangle>ts);
 };
 

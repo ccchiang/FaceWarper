@@ -153,10 +153,9 @@ int main(int argc, char ** argv)
 
 
 /* Testing the face surgery
-*/
 	ifstream ifs;
-	string src = "d001"; //來源人臉檔名
-	string dst = "c001"; //目的人臉檔名
+	string src = "b001"; //來源人臉檔名
+	string dst = "d001"; //目的人臉檔名
 	ifs.open(dst+".txt"); //讀入目的人臉頂點座標檔案(一個人臉)
 	Point2f v1[NO_OF_VERTICES], v2[NO_OF_VERTICES];
 	for (int i=0;i<NO_OF_VERTICES;i++) {
@@ -213,6 +212,7 @@ int main(int argc, char ** argv)
 	imshow("Out", t3_img);
 	//namedWindow("TriOut");
 	//imshow("TriOut", out_face.tri_img);
+*/
 
 
 /* Generating a mean face texture 
@@ -269,8 +269,47 @@ int main(int argc, char ** argv)
 	imshow("Dst KPs", out2);
 */
 
+/* Testing forhead detector
+*/
+	ifstream ifs;
+	string src = "d001"; //來源人臉檔名
+	ifs.open(src+".txt"); //讀入目的人臉頂點座標檔案(一個人臉)
+	Point2f v1[NO_OF_VERTICES], v2[NO_OF_VERTICES];
+	for (int i=0;i<NO_OF_VERTICES;i++) {
+		ifs >> v1[i].x >> v1[i].y;
+	}
+	ifs.close();
+	// Construct the target face object
+	Face srcface(v1, src+".jpg"); //讀入目的人臉影像，並產生人臉物件
+	FDetector fd;
+	vector<Rect> face1 = fd.DetectFacialFeature(srcface.base_img, FACE_RGN, NULL);
+	Mat mean(1, 3, CV_64F);
+	Mat cov(3, 3, CV_64F);
+	FC fcg[][5] = {{ALL}, {SKIN}, {LEYE, REYE, NOSE, MOUTH}}; //人臉五官群組表
+	vector<Triangle> skin_tris1 = srcface.getFCTriangles(fcg[2], 4);
+	w.BuildSkinModel(skin_tris1, &srcface.base_img, mean, cov);
+	Mat prob(srcface.base_img.rows, srcface.base_img.cols, CV_64F, Scalar(0.0));
+	skin_tris1 = srcface.getFCTriangles(fcg[0], 4);
+	Mat tri_img = srcface.drawTriangles(skin_tris1);
+	namedWindow("Triangles");
+	imshow("Triangles", tri_img);
+	Rect face_bndry = w.FindBoundary(skin_tris1);
+	Rect forehead_roi(face_bndry.x, max(face_bndry.y-face_bndry.height/3,0), face_bndry.width, face_bndry.height/2);
+	Mat skinmask = w.ExtractSkin(srcface.base_img, forehead_roi, mean, cov, prob, 1.0e-6);
+	w.RemoveTrianglePixels(skinmask, skin_tris1);
+	for (int r=0;r<srcface.base_img.rows;r++) {
+		for (int c=0;c<srcface.base_img.cols;c++) {
+			if (skinmask.at<uchar>(r,c)==0) {
+				srcface.base_img.at<Vec3b>(r,c)[0] = 0;
+				srcface.base_img.at<Vec3b>(r,c)[1] = 0;
+				srcface.base_img.at<Vec3b>(r,c)[2] = 255;
+			}
+		}
+	}
+	namedWindow("Skin Mask");
+	namedWindow("Skin Prob");
+	imshow("Skin Mask", srcface.base_img);
+	imshow("Skin Prob", prob);
 	waitKey();
-
-
 	return 0;
 }

@@ -21,7 +21,7 @@ public:
 	void setVertex(int n, Point2f v); //設定第n個頂點座標
 	void composeTriangle(); //從64個頂點產生所有組成人臉的三角格
 	void readImg(string filename); //從檔案讀取此人臉物件的人臉影像
-	void drawTriangles(vector<Triangle>& tris); //在人臉物件的備份影像(tri_img)上畫出所有三角格
+	Mat drawTriangles(vector<Triangle>& tris); //在人臉物件的備份影像(tri_img)上畫出所有三角格
 	int noOfTriangles(); //傳回此人臉物件三角格總數
 	int noOfVertices(); //傳回此人臉物件的頂點總數
 	void setVertices(vector<Point2f> new_vertices){ //利用一組頂點更新替代現有的人臉頂點

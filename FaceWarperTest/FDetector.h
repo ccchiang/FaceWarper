@@ -9,6 +9,7 @@
 #include <opencv2\features2d\features2d.hpp>
 #include <opencv2\objdetect\objdetect.hpp>
 #include <vector>
+#include "Face.h"
 #define N_FEATURES 4
 #define FACE_RGN 0
 #define EYE_RGN 1
