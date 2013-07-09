@@ -46,5 +46,6 @@ public:
 	Mat ExtractSkin(Mat faceimg, Rect& roi, Mat& mean, Mat& cov, Mat& prob, double th);
 	Rect FindBoundary(vector<Triangle>ts);
 	void RemoveTrianglePixels(Mat& mask, vector<Triangle>ts);
+	Mat DetectForehead(Face& face, double skin_th=1.0e-6);
 };
 

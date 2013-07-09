@@ -848,3 +848,24 @@ void Warper::RemoveTrianglePixels(Mat& mask, vector<Triangle>ts)
 		}
 	}
 }
+
+Mat Warper::DetectForehead(Face& face, double skin_th)
+{
+	Mat mean(1, 3, CV_64F);
+	Mat cov(3, 3, CV_64F);
+	FC fcg[][5] = {{ALL}, {SKIN}, {LEYE, REYE, NOSE, MOUTH}}; //人臉五官群組表
+	vector<Triangle> skin_tris1 = face.getFCTriangles(fcg[2], 4);
+	BuildSkinModel(skin_tris1, &face.base_img, mean, cov);
+	Mat prob(face.base_img.rows, face.base_img.cols, CV_64F, Scalar(0.0));
+	skin_tris1 = face.getFCTriangles(fcg[0], 4);
+	Mat tri_img = face.drawTriangles(skin_tris1);
+	//namedWindow("Triangles");
+	//imshow("Triangles", tri_img);
+	Rect face_bndry = FindBoundary(skin_tris1);
+	Rect forehead_roi(face_bndry.x, max(face_bndry.y-face_bndry.height/3,0), 
+					  face_bndry.width, face_bndry.height/2);
+	Mat forehead_mask = ExtractSkin(face.base_img, forehead_roi, mean, cov, prob, skin_th);
+	RemoveTrianglePixels(forehead_mask, skin_tris1);
+	return forehead_mask;
+}
+
