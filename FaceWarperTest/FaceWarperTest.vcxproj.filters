@@ -36,6 +36,9 @@
     <ClInclude Include="FDetector.h">
       <Filter>標頭檔</Filter>
     </ClInclude>
+    <ClInclude Include="FaceDresser.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -54,6 +57,9 @@
       <Filter>原始程式檔</Filter>
     </ClCompile>
     <ClCompile Include="FDetector.cpp">
+      <Filter>原始程式檔</Filter>
+    </ClCompile>
+    <ClCompile Include="FaceDresser.cpp">
       <Filter>原始程式檔</Filter>
     </ClCompile>
   </ItemGroup>

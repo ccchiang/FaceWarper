@@ -12,6 +12,7 @@
 #include "Warper.h"
 #include "Face.h"
 #include "FDetector.h"
+#include "FaceDresser.h"
 
 using namespace std;
 using namespace cv;
@@ -270,7 +271,6 @@ int main(int argc, char ** argv)
 */
 
 /* Testing forhead detector
-*/
 	ifstream ifs;
 	string src = "c001"; //來源人臉檔名
 	ifs.open(src+".txt"); //讀入目的人臉頂點座標檔案(一個人臉)
@@ -293,6 +293,31 @@ int main(int argc, char ** argv)
 	}
 	namedWindow("Forehead");
 	imshow("Forehead", srcface.base_img);
+*/
+
+/* Test Face Dresser */
+	ifstream ifs;
+	string src = "a001"; //來源人臉檔名
+	ifs.open(src+".txt"); //讀入目的人臉頂點座標檔案(一個人臉)
+	Point2f v1[NO_OF_VERTICES], v2[NO_OF_VERTICES];
+	for (int i=0;i<NO_OF_VERTICES;i++) {
+		ifs >> v1[i].x >> v1[i].y;
+	}
+	ifs.close();
+	// Construct the target face object
+	Face srcface(v1, src+".jpg"); //讀入目的人臉影像，並產生人臉物件
+	Mat mask;
+	FC fcg[][5] = {{ALL}, {SKIN}, {LCHEEK, RCHEEK}};
+	//FC all_parts[] = {LCHEEK, RCHEEK};
+	vector<Triangle> srcts = srcface.getFCTriangles(fcg[2], 2);
+	mask = w.TrianglesToMask(srcts, srcface.base_img.rows, srcface.base_img.cols);
+	FaceDresser fdr;
+	Mat newface = fdr.Smoother(srcface.base_img, mask);
+	namedWindow("Before dressing");
+	imshow("Before dressing", srcface.base_img);
+	namedWindow("After dressing");
+	imshow("After dressing", newface);
+
 	waitKey();
 	return 0;
 }

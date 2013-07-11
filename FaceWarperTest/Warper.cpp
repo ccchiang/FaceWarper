@@ -869,3 +869,19 @@ Mat Warper::DetectForehead(Face& face, double skin_th)
 	return forehead_mask;
 }
 
+Mat Warper::TrianglesToMask(vector<Triangle> ts, int rows, int cols)
+{
+	int n = ts.size();
+	Mat mask(rows, cols, CV_8U, Scalar(0));
+	for (int i=0;i<n;i++) {
+		int min_y1 = (int)ts[i].getMinY();
+		int max_y1 = (int)ts[i].getMaxY();
+		float left, right;
+		for (int y=min_y1; y<=max_y1; y++) {
+			FindLRBndry((float)y, ts[i], &left, &right);
+			for (int x=(int)left; x<=(int)right; x++)
+				mask.at<uchar>(y,x) = 255;
+		}
+	}
+	return mask;
+}
