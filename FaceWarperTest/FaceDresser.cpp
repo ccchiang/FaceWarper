@@ -89,9 +89,9 @@ Mat FaceDresser::Blend(Face& face, Face& model, Mat& mask, float alpha)
 				cb = (uchar)(face.base_img.at<Vec3b>(i,j)[0]*alpha+(1-alpha)*outface.at<Vec3b>(i,j)[0]);
 				cg = (uchar)(face.base_img.at<Vec3b>(i,j)[1]*alpha+(1-alpha)*outface.at<Vec3b>(i,j)[1]);
 				cr = (uchar)(face.base_img.at<Vec3b>(i,j)[2]*alpha+(1-alpha)*outface.at<Vec3b>(i,j)[2]);
-				outface.at<Vec3b>(i,j)[0] = (uchar)(w*cb+(1-w)*outface.at<Vec3b>(i,j)[0]);
-				outface.at<Vec3b>(i,j)[1] = (uchar)(w*cg+(1-w)*outface.at<Vec3b>(i,j)[1]);
-				outface.at<Vec3b>(i,j)[2] = (uchar)(w*cr+(1-w)*outface.at<Vec3b>(i,j)[2]);
+				outface.at<Vec3b>(i,j)[0] = (uchar)(w*cb+(1-w)*face.base_img.at<Vec3b>(i,j)[0]);
+				outface.at<Vec3b>(i,j)[1] = (uchar)(w*cg+(1-w)*face.base_img.at<Vec3b>(i,j)[1]);
+				outface.at<Vec3b>(i,j)[2] = (uchar)(w*cr+(1-w)*face.base_img.at<Vec3b>(i,j)[2]);
 			}
 		}
 	}

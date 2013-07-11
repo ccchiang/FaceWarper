@@ -888,12 +888,25 @@ Mat Warper::TrianglesToMask(vector<Triangle> ts, int rows, int cols)
 	return mask;
 }
 
-Mat Warper::WeightMask(Mat mask, int neighbor)
+Mat Warper::WeightMask(Mat mask, int type, int neighbor)
 {
-	Mat out;
-	double sigma = 15;
+	Mat out(mask.rows, mask.cols, CV_8U, Scalar(0));
+	Mat edge, tmp_mask;
+	double sigma = 30;
 	Size sz(neighbor, neighbor);
-	GaussianBlur(mask, out, sz, sigma);
+	//Canny(mask, edge, 250, 255);
+	if (type==0) //Distance Transform 
+	{
+		distanceTransform(mask, edge, CV_DIST_L1, 3);
+		normalize(edge, edge, 0, 255, NORM_MINMAX);
+		for (int i=0;i<(int)edge.rows;i++) {
+			for (int j=0;j<(int)edge.cols;j++) {
+				out.at<uchar>(i,j) = (uchar)(edge.at<float>(i,j));
+			}
+		}
+	}
+	else
+		GaussianBlur(mask, out, sz, sigma);
 	return out;
 }
 
@@ -924,9 +937,9 @@ Mat Warper::ReColorMaskedSkin(Mat &T, Mat& mask, Mat* face_img)
 				uchar b = saturate_cast<uchar>(new_color.at<float>(0,0));
 				uchar g = saturate_cast<uchar>(new_color.at<float>(1,0));
 				uchar r = saturate_cast<uchar>(new_color.at<float>(2,0));
-				tmp_img.at<Vec3b>(i,j)[0] = (uchar)(w*b+(1-w)*tmp_img.at<Vec3b>(i,j)[0]);
-				tmp_img.at<Vec3b>(i,j)[1] = (uchar)(w*b+(1-w)*tmp_img.at<Vec3b>(i,j)[1]);
-				tmp_img.at<Vec3b>(i,j)[2] = (uchar)(w*b+(1-w)*tmp_img.at<Vec3b>(i,j)[2]);
+				tmp_img.at<Vec3b>(i,j)[0] = (uchar)(w*b+(1-w)*face_img->at<Vec3b>(i,j)[0]);
+				tmp_img.at<Vec3b>(i,j)[1] = (uchar)(w*g+(1-w)*face_img->at<Vec3b>(i,j)[1]);
+				tmp_img.at<Vec3b>(i,j)[2] = (uchar)(w*r+(1-w)*face_img->at<Vec3b>(i,j)[2]);
 			}
 		}
 	}
@@ -1001,15 +1014,15 @@ Mat Warper::AdaptFaceTone(Face& face, Face& ref_face)
 {
 	Mat out;
 	Mat mask, ref_mask;
-	FC fcg[][5] = {{SKIN},{ALL}};
+	FC fcg[][5] = {{BETWEENEYES},{ALL},{BETWEENEYES,LCHEEK,RCHEEK}};
 	//vector<Triangle> srcts = src_face.getFCTriangles(fcg[0], 1);
 	mask = GetFaceMask(face);
 	vector<Triangle> refts = ref_face.getFCTriangles(fcg[1], 1);
 	ref_mask = TrianglesToMask(refts, ref_face.base_img.rows, ref_face.base_img.cols);
 	Mat T = AlignMaskedSkinColor(face.base_img, mask, ref_face.base_img, ref_mask);
-	Mat wmask = WeightMask(mask, 9);
+	Mat wmask = WeightMask(mask, 1, 5);
+	namedWindow("wmask");
+	imshow("wmask", wmask);
 	out = ReColorMaskedSkin(T, wmask, &face.base_img);
-	namedWindow("tmp face");
-	imshow("tmp face", out);
 	return out;
 }

@@ -5,7 +5,7 @@
 #include <vector>
 #include "Triangle.h"
 #define NO_OF_VERTICES	64 //頂點數目
-enum FC {NOSE, LEYE, REYE, MOUTH, JAW, SJAW, LBROW, RBROW, SKIN, ALL, LCHEEK, RCHEEK, LEYELID, REYELID}; //定義個五官部位的代號
+enum FC {NOSE, LEYE, REYE, MOUTH, JAW, SJAW, LBROW, RBROW, SKIN, ALL, LCHEEK, RCHEEK, LEYELID, REYELID, BETWEENEYES}; //定義個五官部位的代號
 
 using namespace std;
 using namespace cv;

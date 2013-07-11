@@ -48,7 +48,7 @@ public:
 	void RemoveTrianglePixels(Mat& mask, vector<Triangle>ts);
 	Mat DetectForehead(Face& face, double skin_th=1.0e-6);
 	Mat TrianglesToMask(vector<Triangle> ts, int rows, int cols);
-	Mat WeightMask(Mat mask, int neighbor);
+	Mat WeightMask(Mat mask, int type, int neighbor);
 	Mat GetFaceMask(Face& face);
 	Mat ReColorMaskedSkin(Mat &T, Mat& mask, Mat* face_img);
 	Mat AlignMaskedSkinColor(Mat& img1, Mat mask1, Mat& img2, Mat mask2);
