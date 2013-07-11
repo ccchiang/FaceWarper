@@ -15,7 +15,8 @@ class FaceDresser
 public:
 	FaceDresser(void);
 	~FaceDresser(void);
-	Mat Smoother(Mat& face, Mat& mask);
+	Mat Smoother(Mat& face, Mat& mask, int sigma1, int sigma2, int dist, int wsize);
 	Mat Whiten(Mat& face, Mat& mask, double gamma);
+	Mat Reddish(Mat& face, Mat& mask, int offset);
 };
 
