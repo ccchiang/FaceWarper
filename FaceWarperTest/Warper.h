@@ -48,5 +48,6 @@ public:
 	void RemoveTrianglePixels(Mat& mask, vector<Triangle>ts);
 	Mat DetectForehead(Face& face, double skin_th=1.0e-6);
 	Mat TrianglesToMask(vector<Triangle> ts, int rows, int cols);
+	Mat WeightMask(Mat mask, int neighbor=5);
 };
 

@@ -297,7 +297,7 @@ int main(int argc, char ** argv)
 
 /* Test Face Dresser */
 	ifstream ifs;
-	string src = "a001"; //來源人臉檔名
+	string src = "d001"; //來源人臉檔名
 	ifs.open(src+".txt"); //讀入目的人臉頂點座標檔案(一個人臉)
 	Point2f v1[NO_OF_VERTICES], v2[NO_OF_VERTICES];
 	for (int i=0;i<NO_OF_VERTICES;i++) {
@@ -309,10 +309,13 @@ int main(int argc, char ** argv)
 	Mat mask;
 	FC fcg[][5] = {{ALL}, {SKIN}, {LCHEEK, RCHEEK}};
 	//FC all_parts[] = {LCHEEK, RCHEEK};
-	vector<Triangle> srcts = srcface.getFCTriangles(fcg[2], 2);
+	vector<Triangle> srcts = srcface.getFCTriangles(fcg[0], 1);
 	mask = w.TrianglesToMask(srcts, srcface.base_img.rows, srcface.base_img.cols);
+	mask = w.WeightMask(mask, 21); //window size must be an odd integer
 	FaceDresser fdr;
-	Mat newface = fdr.Smoother(srcface.base_img, mask);
+	Mat newface;
+	newface = fdr.Smoother(srcface.base_img, mask);
+	newface = fdr.Whiten(newface, mask, 0.7);
 	namedWindow("Before dressing");
 	imshow("Before dressing", srcface.base_img);
 	namedWindow("After dressing");

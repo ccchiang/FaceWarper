@@ -16,5 +16,6 @@ public:
 	FaceDresser(void);
 	~FaceDresser(void);
 	Mat Smoother(Mat& face, Mat& mask);
+	Mat Whiten(Mat& face, Mat& mask, double gamma);
 };
 

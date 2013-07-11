@@ -885,3 +885,12 @@ Mat Warper::TrianglesToMask(vector<Triangle> ts, int rows, int cols)
 	}
 	return mask;
 }
+
+Mat Warper::WeightMask(Mat mask, int neighbor)
+{
+	Mat out;
+	double sigma = 15;
+	Size sz(neighbor, neighbor);
+	GaussianBlur(mask, out, sz, sigma);
+	return out;
+}
