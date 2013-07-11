@@ -793,6 +793,8 @@ void Warper::BuildSkinModel(vector<Triangle>ts, Mat* face_img, Mat &mean, Mat& c
 	}
 	calcCovarMatrix(&pixels[0], pixels.size(), cov, mean, CV_COVAR_NORMAL);
 	cov = cov/(pixels.size()-1);
+	cout << mean << endl;
+	cout << cov << endl;
 }
 
 Mat Warper::ExtractSkin(Mat faceimg, Rect& roi, Mat& mean, Mat& cov, Mat& prob, double th)
@@ -863,7 +865,7 @@ Mat Warper::DetectForehead(Face& face, double skin_th)
 	//imshow("Triangles", tri_img);
 	Rect face_bndry = FindBoundary(skin_tris1);
 	Rect forehead_roi(face_bndry.x, max(face_bndry.y-face_bndry.height/3,0), 
-					  face_bndry.width, face_bndry.height/2);
+					  face_bndry.width, 2*face_bndry.height/3);
 	Mat forehead_mask = ExtractSkin(face.base_img, forehead_roi, mean, cov, prob, skin_th);
 	RemoveTrianglePixels(forehead_mask, skin_tris1);
 	return forehead_mask;
@@ -892,5 +894,122 @@ Mat Warper::WeightMask(Mat mask, int neighbor)
 	double sigma = 15;
 	Size sz(neighbor, neighbor);
 	GaussianBlur(mask, out, sz, sigma);
+	return out;
+}
+
+Mat Warper::GetFaceMask(Face& face)
+{
+	Mat fh_mask = DetectForehead(face);
+	FC fc = ALL;
+	vector<Triangle> ts = face.getFCTriangles(&fc, 1);
+	Mat f_mask = TrianglesToMask(ts, face.base_img.rows, face.base_img.cols);
+	Mat final_mask;
+	bitwise_or(fh_mask, f_mask, final_mask);
+	return final_mask;
+}
+
+Mat Warper::ReColorMaskedSkin(Mat &T, Mat& mask, Mat* face_img)
+{
+	Mat tmp_img = face_img->clone();
+	Mat color(4, 1, CV_32F), new_color;
+	for (int i=0;i<(int)face_img->rows;i++) {
+		for (int j=0;j<(int)face_img->cols;j++) {
+			if (mask.at<uchar>(i,j)!=0) {
+				float w = (float)(mask.at<uchar>(i,j))/255.0f;
+				color.at<float>(0,0) = (float)face_img->at<Vec3b>(i,j)[0];
+				color.at<float>(1,0) = (float)face_img->at<Vec3b>(i,j)[1];
+				color.at<float>(2,0) = (float)face_img->at<Vec3b>(i,j)[2];
+				color.at<float>(3,0) = 1.0f;
+				new_color = T*color;
+				uchar b = saturate_cast<uchar>(new_color.at<float>(0,0));
+				uchar g = saturate_cast<uchar>(new_color.at<float>(1,0));
+				uchar r = saturate_cast<uchar>(new_color.at<float>(2,0));
+				tmp_img.at<Vec3b>(i,j)[0] = (uchar)(w*b+(1-w)*tmp_img.at<Vec3b>(i,j)[0]);
+				tmp_img.at<Vec3b>(i,j)[1] = (uchar)(w*b+(1-w)*tmp_img.at<Vec3b>(i,j)[1]);
+				tmp_img.at<Vec3b>(i,j)[2] = (uchar)(w*b+(1-w)*tmp_img.at<Vec3b>(i,j)[2]);
+			}
+		}
+	}
+	return tmp_img;
+}
+
+Mat Warper::AlignMaskedSkinColor(Mat& img1, Mat mask1, Mat& img2, Mat mask2)
+{
+	Mat C1, C2;
+	Mat m1, m2;
+	vector<Mat> pixels1, pixels2;
+	Mat tmp_img = img1.clone();
+	for (int y=0;y<img1.rows;y++) {
+		for (int x=0;x<img1.cols;x++) {
+			if (mask1.at<uchar>(y,x)!=0) {
+				Mat p(1, 3, CV_64F);
+				p.at<double>(0,0) = img1.at<Vec3b>(y, x)[0];
+				p.at<double>(0,1) = img1.at<Vec3b>(y, x)[1];
+				p.at<double>(0,2) = img1.at<Vec3b>(y, x)[2];
+				pixels1.push_back(p);
+			}
+		}
+	}
+	calcCovarMatrix(&pixels1[0], pixels1.size(), C1, m1, CV_COVAR_NORMAL);
+	C1 = C1/(pixels1.size()-1);
+	cout << m1 << endl;
+	cout << C1 << endl;
+	for (int y=0;y<img2.rows;y++) {
+		for (int x=0;x<img2.cols;x++) {
+			if (mask2.at<uchar>(y,x)!=0) {
+				Mat p(1, 3, CV_64F);
+				p.at<double>(0,0) = img2.at<Vec3b>(y, x)[0];
+				p.at<double>(0,1) = img2.at<Vec3b>(y, x)[1];
+				p.at<double>(0,2) = img2.at<Vec3b>(y, x)[2];
+				pixels2.push_back(p);
+			}
+		}
+	}
+	calcCovarMatrix(&pixels2[0], pixels2.size(), C2, m2, CV_COVAR_NORMAL);
+	C2 = C2/(pixels2.size()-1);
+
+	Mat Tt1(4, 4, CV_32F, Scalar(0));
+	Mat Ts1(4, 4, CV_32F, Scalar(0));
+	Mat Tt2(4, 4, CV_32F, Scalar(0));
+	Tt1.at<float>(0,0) = 1.0f;
+	Tt1.at<float>(1,1) = 1.0f;
+	Tt1.at<float>(2,2) = 1.0f;
+	Tt1.at<float>(0,3) = -(float)m1.at<double>(0,0);
+	Tt1.at<float>(1,3) = -(float)m1.at<double>(0,1);
+	Tt1.at<float>(2,3) = -(float)m1.at<double>(0,2);
+	Tt1.at<float>(3,3) = 1.0f;
+	Tt2.at<float>(0,0) = 1.0f;
+	Tt2.at<float>(1,1) = 1.0f;
+	Tt2.at<float>(2,2) = 1.0f;
+	Tt2.at<float>(0,3) = (float)m2.at<double>(0,0);
+	Tt2.at<float>(1,3) = (float)m2.at<double>(0,1);
+	Tt2.at<float>(2,3) = (float)m2.at<double>(0,2);
+	Tt2.at<float>(3,3) = 1.0f;
+	Ts1.at<float>(0,0) = (float)sqrt(C2.at<double>(0, 0)/C1.at<double>(0, 0));
+	Ts1.at<float>(1,1) = (float)sqrt(C2.at<double>(1, 0)/C1.at<double>(1, 0));
+	Ts1.at<float>(2,2) = (float)sqrt(C2.at<double>(2, 0)/C1.at<double>(2, 0));
+	Ts1.at<float>(3,3) = 1.0f;
+	Mat T = Tt2*Ts1*Tt1;
+	//cout << Tt2 << endl;
+	//cout << Ts1 << endl;
+	//cout << Tt1 << endl;
+	cout << T << endl;
+	return T;
+}
+
+Mat Warper::AdaptFaceTone(Face& face, Face& ref_face)
+{
+	Mat out;
+	Mat mask, ref_mask;
+	FC fcg[][5] = {{SKIN},{ALL}};
+	//vector<Triangle> srcts = src_face.getFCTriangles(fcg[0], 1);
+	mask = GetFaceMask(face);
+	vector<Triangle> refts = ref_face.getFCTriangles(fcg[1], 1);
+	ref_mask = TrianglesToMask(refts, ref_face.base_img.rows, ref_face.base_img.cols);
+	Mat T = AlignMaskedSkinColor(face.base_img, mask, ref_face.base_img, ref_mask);
+	Mat wmask = WeightMask(mask, 9);
+	out = ReColorMaskedSkin(T, wmask, &face.base_img);
+	namedWindow("tmp face");
+	imshow("tmp face", out);
 	return out;
 }

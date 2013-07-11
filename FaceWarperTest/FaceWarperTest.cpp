@@ -246,8 +246,8 @@ int main(int argc, char ** argv)
 	imshow("Src Face", src_face.base_img);
 */
 
-/* Testing feature detector
 
+/* Testing feature detector
 	string src = "c001"; //來源人臉檔名
 	string dst = "mean"; //目的人臉檔名
 	Mat srcface = imread(src+".jpg");
@@ -295,7 +295,7 @@ int main(int argc, char ** argv)
 	imshow("Forehead", srcface.base_img);
 */
 
-/* Test Face Dresser */
+/* Test Face Dresser 
 	ifstream ifs;
 	string src = "a001"; //來源人臉檔名
 	ifs.open(src+".txt"); //讀入目的人臉頂點座標檔案(一個人臉)
@@ -322,6 +322,48 @@ int main(int argc, char ** argv)
 	newface = fdr.Reddish(newface, mask, 30);
 	namedWindow("Before dressing");
 	imshow("Before dressing", srcface.base_img);
+	namedWindow("After dressing");
+	imshow("After dressing", newface);
+*/
+
+/* Test Face Dresser Copying
+*/
+
+	ifstream ifs;
+	string dst = "d001"; //來源人臉檔名
+	string src = "makeup\\b011_Perfect365"; //目的人臉檔名
+	ifs.open(dst+".txt"); //讀入目的人臉頂點座標檔案(一個人臉)
+	Point2f v1[NO_OF_VERTICES], v2[NO_OF_VERTICES];
+	for (int i=0;i<NO_OF_VERTICES;i++) {
+		ifs >> v1[i].x >> v1[i].y;
+	}
+	ifs.close();
+	Face dst_face(v1, dst+".jpg"); //讀入目的人臉影像，並產生人臉物件
+
+	// Read the vertices of the source face from txt file 
+	ifs.open(src+".2dpts"); //讀入來源人臉頂點座標(一個人臉)
+	for (int i=0;i<NO_OF_VERTICES;i++) {
+		ifs >> v2[i].x >> v2[i].y;
+	}
+	ifs.close();
+	// Construct the source face object
+	Face src_face(v2, src+".jpg"); //讀入來源人臉影像
+	FC all_parts = ALL;
+	Mat mask;
+	FC fcg[][5] = {{ALL}, {LEYELID,REYELID}, {LCHEEK, RCHEEK}};
+	//vector<Triangle> srcts = src_face.getFCTriangles(fcg[0], 1);
+	vector<Triangle> dstts = dst_face.getFCTriangles(fcg[0], 1);
+	//Mat tmp_model_img = src_face.base_img.clone();
+	//w.WarpFace(&tmp_model_img, &srcts, &src_face.base_img, &dstts, false);
+	//namedWindow("tmp face");
+	//imshow("tmp face", src_face.base_img);
+
+	FaceDresser fdr;
+	mask = w.TrianglesToMask(dstts, dst_face.base_img.rows, dst_face.base_img.cols);
+	mask = w.WeightMask(mask, 41); //window size must be an odd integer
+	Mat newface = fdr.Blend(dst_face, src_face, mask, 0.4f);	
+	namedWindow("Before dressing");
+	imshow("Before dressing", src_face.base_img);
 	namedWindow("After dressing");
 	imshow("After dressing", newface);
 

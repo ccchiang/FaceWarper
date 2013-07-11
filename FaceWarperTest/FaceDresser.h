@@ -18,5 +18,6 @@ public:
 	Mat Smoother(Mat& face, Mat& mask, int sigma1, int sigma2, int dist, int wsize);
 	Mat Whiten(Mat& face, Mat& mask, double gamma);
 	Mat Reddish(Mat& face, Mat& mask, int offset);
+	Mat Blend(Face& face, Face& model, Mat& mask, float alpha);
 };
 
