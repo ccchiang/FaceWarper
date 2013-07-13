@@ -331,8 +331,8 @@ int main(int argc, char ** argv)
 /* Test Face Dresser Copying
 */
 	ifstream ifs;
-	string dst = "d001"; //來源人臉檔名
-	string src = "makeup\\b011_Perfect365"; //目的人臉檔名
+	string dst = "c001"; //來源人臉檔名
+	string src = "makeup\\b005_Perfect365"; //目的人臉檔名
 	ifs.open(dst+".txt"); //讀入目的人臉頂點座標檔案(一個人臉)
 	Point2f v1[NO_OF_VERTICES], v2[NO_OF_VERTICES];
 	for (int i=0;i<NO_OF_VERTICES;i++) {
@@ -354,7 +354,7 @@ int main(int argc, char ** argv)
 	FaceDresser fdr;
 	FC all_parts = ALL;
 	Mat mask;
-	FC fcg[][5] = {{ALL}, {BETWEENEYES}, {LEYELID,REYELID}, {LCHEEK, RCHEEK}};
+	FC fcg[][5] = {{ALL}, {BETWEENEYES}, {LEYELID,REYELID}, {LCHEEKBONE, RCHEEKBONE}, {LCHEEKBONE, RCHEEKBONE,LCHEEK, RCHEEK}};
 	vector<Triangle> dstts = dst_face.getFCTriangles(fcg[0], 1);
 	mask = w.TrianglesToMask(dstts, dst_face.base_img.rows, dst_face.base_img.cols);
 	//mask = w.GetFaceMask(dst_face);
@@ -363,18 +363,26 @@ int main(int argc, char ** argv)
 	int weight_type = WEIGHT_GAUSS; //WEIGHT_DTFORM: distance transform 
 									 //WEIGHT_GAUSS: gaussian blur
 	mask = w.WeightMask(mask, weight_type, 15); //window size must be an odd integer
-	namedWindow("mask");
-	imshow("mask", mask);
+	//namedWindow("mask");
+	//imshow("mask", mask);
 	float alpha = (weight_type==WEIGHT_DTFORM? 0.0f:0.35f); //Experimental results suggest different
 												//weights for different weight masts
 	Mat newface = fdr.Blend(dst_face, src_face, mask, alpha);	
-
-	namedWindow("Before dressing"); 
-	imshow("Before dressing", dst_face.base_img);
-	namedWindow("After dressing");
-	imshow("After dressing", newface);
+	//dstts = dst_face.getFCTriangles(fcg[4], 2);
+	//mask = w.TrianglesToMask(dstts, dst_face.base_img.rows, dst_face.base_img.cols);
+	//mask = w.WeightMask(mask, 0, 21); //window size must be an odd integer
+	//newface = fdr.Reddish(newface, mask, 30);
+	resize(newface, newface, Size(2*newface.cols/3, 2*newface.rows/3));
+	resize(tmp_face.base_img, tmp_face.base_img, Size(2*tmp_face.base_img.cols/3, 2*tmp_face.base_img.rows/3));
+	resize(src_face.base_img, src_face.base_img, Size(2*src_face.base_img.cols/3, 2*src_face.base_img.rows/3));
 	namedWindow("Model face");
 	imshow("Model face", src_face.base_img);
+	imshow("Before dressing", tmp_face.base_img);
+	namedWindow("After dressing");
+	imshow("After dressing", newface);
+	moveWindow("Model face", 0, tmp_face.base_img.rows);
+	moveWindow("Before dressing", 0, 0);
+	moveWindow("After dressing", tmp_face.base_img.cols, 0);
 
 	waitKey();
 	return 0;

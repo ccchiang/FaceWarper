@@ -1017,7 +1017,7 @@ Mat Warper::AdaptFaceTone(Face& face, Face& ref_face)
 {
 	Mat out;
 	Mat mask, ref_mask;
-	FC fcg[][5] = {{BETWEENEYES},{ALL},{BETWEENEYES,LCHEEK,RCHEEK}};
+	FC fcg[][5] = {{BETWEENEYES},{ALL},{BETWEENEYES,LCHEEKBONE,RCHEEKBONE}};
 	//vector<Triangle> srcts = src_face.getFCTriangles(fcg[0], 1);
 	mask = GetFaceMask(face);
 	vector<Triangle> refts = ref_face.getFCTriangles(fcg[1], 1);
@@ -1030,8 +1030,8 @@ Mat Warper::AdaptFaceTone(Face& face, Face& ref_face)
 	Mat skin_mask = ExtractSkin(face.base_img, roi, skin_mean, skin_cov, prob, 0.000001);
 	bitwise_or(mask, skin_mask, mask); //再納入眉心區域的膚色像素，以達到將非膚色區域完全排除於recolor之外
 	Mat wmask = WeightMask(mask, 1, 5);
-	namedWindow("wmask");
-	imshow("wmask", wmask);
+	//namedWindow("wmask");
+	//imshow("wmask", wmask);
 	out = ReColorMaskedSkin(T, wmask, &face.base_img);
 	return out;
 }

@@ -98,3 +98,22 @@ Mat FaceDresser::Blend(Face& face, Face& model, Mat& mask, float alpha)
 	}
 	return outface;
 }
+
+Mat FaceDresser::Dewrinkle(Mat& faceimg, vector<Triangle>ts, Mat& mask)
+{
+	Mat outface;
+	outface = faceimg.clone();
+	Warper warper;
+	int n = ts.size();
+	Rect roi = warper.FindBoundary(ts);
+	Mat prob(faceimg.rows, faceimg.cols, CV_64F, Scalar(0.0));
+	Mat mean(1,3,CV_32F,Scalar(0));
+	Mat cov(3,3,CV_32F,Scalar(0));
+	warper.BuildSkinModel(ts, &faceimg, mean, cov);
+	Mat skin_mask = warper.ExtractSkin(faceimg, roi, mean, cov, prob, 0.000005);
+	Mat non_skin_mask;
+	bitwise_not(skin_mask, non_skin_mask);
+	Mat T = warper.AlignMaskedSkinColor(faceimg, non_skin_mask, faceimg, skin_mask);
+	outface = warper.ReColorMaskedSkin(T, non_skin_mask, &faceimg);
+	return outface;
+}

@@ -19,5 +19,6 @@ public:
 	Mat Whiten(Mat& face, Mat& mask, double gamma);
 	Mat Reddish(Mat& face, Mat& mask, int offset);
 	Mat Blend(Face& face, Face& model, Mat& mask, float alpha);
+	Mat Dewrinkle(Mat& faceimg, vector<Triangle>ts, Mat& mask);
 };
 
