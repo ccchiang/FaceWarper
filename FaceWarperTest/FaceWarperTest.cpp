@@ -13,7 +13,8 @@
 #include "Face.h"
 #include "FDetector.h"
 #include "FaceDresser.h"
-
+#define WEIGHT_DTFORM	0
+#define WEIGHT_GAUSS	1
 using namespace std;
 using namespace cv;
 
@@ -296,6 +297,7 @@ int main(int argc, char ** argv)
 */
 
 /* Test Face Dresser 
+
 	ifstream ifs;
 	string src = "a001"; //來源人臉檔名
 	ifs.open(src+".txt"); //讀入目的人臉頂點座標檔案(一個人臉)
@@ -308,17 +310,17 @@ int main(int argc, char ** argv)
 	Face srcface(v1, src+".jpg"); //讀入目的人臉影像，並產生人臉物件
 	Mat mask;
 	FC fcg[][5] = {{ALL}, {SKIN}, {LCHEEK, RCHEEK}};
-	//FC all_parts[] = {LCHEEK, RCHEEK};
 	vector<Triangle> srcts = srcface.getFCTriangles(fcg[0], 1);
 	mask = w.TrianglesToMask(srcts, srcface.base_img.rows, srcface.base_img.cols);
-	mask = w.WeightMask(mask, 21); //window size must be an odd integer
+	mask = w.GetFaceMask(srcface);
+	mask = w.WeightMask(mask, 0, 21); //window size must be an odd integer
 	FaceDresser fdr;
 	Mat newface = srcface.base_img.clone();
 	newface = fdr.Smoother(srcface.base_img, mask, 60, 60, 7, 3);
 	newface = fdr.Whiten(newface, mask, 0.7);
 	srcts = srcface.getFCTriangles(fcg[2], 2);
 	mask = w.TrianglesToMask(srcts, srcface.base_img.rows, srcface.base_img.cols);
-	mask = w.WeightMask(mask, 21); //window size must be an odd integer
+	mask = w.WeightMask(mask, 0, 21); //window size must be an odd integer
 	newface = fdr.Reddish(newface, mask, 30);
 	namedWindow("Before dressing");
 	imshow("Before dressing", srcface.base_img);
@@ -328,10 +330,9 @@ int main(int argc, char ** argv)
 
 /* Test Face Dresser Copying
 */
-
 	ifstream ifs;
 	string dst = "c001"; //來源人臉檔名
-	string src = "makeup\\a003_Perfect365"; //目的人臉檔名
+	string src = "makeup\\b001_Perfect365"; //目的人臉檔名
 	ifs.open(dst+".txt"); //讀入目的人臉頂點座標檔案(一個人臉)
 	Point2f v1[NO_OF_VERTICES], v2[NO_OF_VERTICES];
 	for (int i=0;i<NO_OF_VERTICES;i++) {
@@ -348,19 +349,25 @@ int main(int argc, char ** argv)
 	ifs.close();
 	// Construct the source face object
 	Face src_face(v2, src+".jpg"); //讀入來源人臉影像
+	Face tmp_face(dst_face);
+	dst_face.base_img = w.AdaptFaceTone(tmp_face, src_face); //調整整形者的膚色為模特兒的膚色
 	FaceDresser fdr;
 	FC all_parts = ALL;
 	Mat mask;
-	FC fcg[][5] = {{ALL}, {LEYELID,REYELID}, {LCHEEK, RCHEEK}};
+	FC fcg[][5] = {{ALL}, {BETWEENEYES}, {LEYELID,REYELID}, {LCHEEK, RCHEEK}};
 	vector<Triangle> dstts = dst_face.getFCTriangles(fcg[0], 1);
 	mask = w.TrianglesToMask(dstts, dst_face.base_img.rows, dst_face.base_img.cols);
-	mask = w.GetFaceMask(dst_face);
-	mask = w.WeightMask(mask, 1, 5); //window size must be an odd integer
-	Face tmp_face(dst_face);
-	dst_face.base_img = w.AdaptFaceTone(tmp_face, src_face);
+	//mask = w.GetFaceMask(dst_face);
+	dstts = dst_face.getFCTriangles(fcg[1],1);
+	w.RemoveTrianglePixels(mask, dstts);
+	int weight_type = WEIGHT_GAUSS; //WEIGHT_DTFORM: distance transform 
+									 //WEIGHT_GAUSS: gaussian blur
+	mask = w.WeightMask(mask, weight_type, 15); //window size must be an odd integer
 	namedWindow("mask");
 	imshow("mask", mask);
-	Mat newface = fdr.Blend(dst_face, src_face, mask, 0.45f);	
+	float alpha = (weight_type==WEIGHT_DTFORM? 0.0f:0.45f); //Experimental results suggest different
+												//weights for different weight masts
+	Mat newface = fdr.Blend(dst_face, src_face, mask, alpha);	
 
 	namedWindow("Before dressing"); 
 	imshow("Before dressing", dst_face.base_img);

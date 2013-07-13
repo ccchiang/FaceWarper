@@ -892,7 +892,7 @@ Mat Warper::WeightMask(Mat mask, int type, int neighbor)
 {
 	Mat out(mask.rows, mask.cols, CV_8U, Scalar(0));
 	Mat edge, tmp_mask;
-	double sigma = 30;
+	double sigma = 20;
 	Size sz(neighbor, neighbor);
 	//Canny(mask, edge, 250, 255);
 	if (type==0) //Distance Transform 
@@ -950,10 +950,11 @@ Mat Warper::AlignMaskedSkinColor(Mat& img1, Mat mask1, Mat& img2, Mat mask2)
 {
 	Mat C1, C2;
 	Mat m1, m2;
+	int step = 3;
 	vector<Mat> pixels1, pixels2;
 	Mat tmp_img = img1.clone();
-	for (int y=0;y<img1.rows;y++) {
-		for (int x=0;x<img1.cols;x++) {
+	for (int y=0;y<img1.rows;y+=step) { //y+=step speeds up the process (step>1)
+		for (int x=0;x<img1.cols;x+=step) { //x+=step speeds up the process (step>1)
 			if (mask1.at<uchar>(y,x)!=0) {
 				Mat p(1, 3, CV_64F);
 				p.at<double>(0,0) = img1.at<Vec3b>(y, x)[0];
@@ -967,8 +968,8 @@ Mat Warper::AlignMaskedSkinColor(Mat& img1, Mat mask1, Mat& img2, Mat mask2)
 	C1 = C1/(pixels1.size()-1);
 	cout << m1 << endl;
 	cout << C1 << endl;
-	for (int y=0;y<img2.rows;y++) {
-		for (int x=0;x<img2.cols;x++) {
+	for (int y=0;y<img2.rows;y+=step) {//y+=step speeds up the process
+		for (int x=0;x<img2.cols;x+=step) {//x+=step speeds up the process
 			if (mask2.at<uchar>(y,x)!=0) {
 				Mat p(1, 3, CV_64F);
 				p.at<double>(0,0) = img2.at<Vec3b>(y, x)[0];
@@ -1006,7 +1007,7 @@ Mat Warper::AlignMaskedSkinColor(Mat& img1, Mat mask1, Mat& img2, Mat mask2)
 	//cout << Tt2 << endl;
 	//cout << Ts1 << endl;
 	//cout << Tt1 << endl;
-	cout << T << endl;
+	//cout << T << endl;
 	return T;
 }
 
@@ -1020,6 +1021,8 @@ Mat Warper::AdaptFaceTone(Face& face, Face& ref_face)
 	vector<Triangle> refts = ref_face.getFCTriangles(fcg[1], 1);
 	ref_mask = TrianglesToMask(refts, ref_face.base_img.rows, ref_face.base_img.cols);
 	Mat T = AlignMaskedSkinColor(face.base_img, mask, ref_face.base_img, ref_mask);
+	vector<Triangle> dstts = face.getFCTriangles(fcg[0],1);
+	RemoveTrianglePixels(mask, dstts); //排出眉心區域的recolor以免改變部分人留海的髮色，會讓合成結果不自然
 	Mat wmask = WeightMask(mask, 1, 5);
 	namedWindow("wmask");
 	imshow("wmask", wmask);
