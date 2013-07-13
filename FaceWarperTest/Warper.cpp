@@ -793,8 +793,10 @@ void Warper::BuildSkinModel(vector<Triangle>ts, Mat* face_img, Mat &mean, Mat& c
 	}
 	calcCovarMatrix(&pixels[0], pixels.size(), cov, mean, CV_COVAR_NORMAL);
 	cov = cov/(pixels.size()-1);
-	cout << mean << endl;
-	cout << cov << endl;
+	skin_mean = mean.clone();
+	skin_cov = cov.clone();
+	//cout << mean << endl;
+	//cout << cov << endl;
 }
 
 Mat Warper::ExtractSkin(Mat faceimg, Rect& roi, Mat& mean, Mat& cov, Mat& prob, double th)
@@ -1023,6 +1025,10 @@ Mat Warper::AdaptFaceTone(Face& face, Face& ref_face)
 	Mat T = AlignMaskedSkinColor(face.base_img, mask, ref_face.base_img, ref_mask);
 	vector<Triangle> dstts = face.getFCTriangles(fcg[0],1);
 	RemoveTrianglePixels(mask, dstts); //排出眉心區域的recolor以免改變部分人留海的髮色，會讓合成結果不自然
+	Rect roi = FindBoundary(dstts);
+	Mat prob(face.base_img.rows, face.base_img.cols, CV_64F, Scalar(0.0));
+	Mat skin_mask = ExtractSkin(face.base_img, roi, skin_mean, skin_cov, prob, 0.000001);
+	bitwise_or(mask, skin_mask, mask); //再納入眉心區域的膚色像素，以達到將非膚色區域完全排除於recolor之外
 	Mat wmask = WeightMask(mask, 1, 5);
 	namedWindow("wmask");
 	imshow("wmask", wmask);

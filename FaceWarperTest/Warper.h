@@ -19,6 +19,10 @@ private:
 	void FindLRBndry(float k, Triangle &dst, float* left, float* right); //找出y=k方程式與三角形dst相交的左、右邊界之x位置(在WarpTriangle中要用到)
 public:
 	double alpha;
+	Mat skin_mean;
+	Mat skin_cov;
+	Mat model_skin_mean;
+	Mat model_skin_cov;
 	void SetAlpha(double a){alpha = a;}
 	Mat FindAffine(Triangle & t1, Triangle & t2); //找出兩三角格間的仿射轉換 T*t1==>t2
 	void WarpTriangle(Mat* src_img, Triangle & src, //將dst三角格的影像拉成與src三角格一樣的形狀 

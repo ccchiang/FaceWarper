@@ -331,8 +331,8 @@ int main(int argc, char ** argv)
 /* Test Face Dresser Copying
 */
 	ifstream ifs;
-	string dst = "c001"; //來源人臉檔名
-	string src = "makeup\\b001_Perfect365"; //目的人臉檔名
+	string dst = "d001"; //來源人臉檔名
+	string src = "makeup\\b011_Perfect365"; //目的人臉檔名
 	ifs.open(dst+".txt"); //讀入目的人臉頂點座標檔案(一個人臉)
 	Point2f v1[NO_OF_VERTICES], v2[NO_OF_VERTICES];
 	for (int i=0;i<NO_OF_VERTICES;i++) {
@@ -365,7 +365,7 @@ int main(int argc, char ** argv)
 	mask = w.WeightMask(mask, weight_type, 15); //window size must be an odd integer
 	namedWindow("mask");
 	imshow("mask", mask);
-	float alpha = (weight_type==WEIGHT_DTFORM? 0.0f:0.45f); //Experimental results suggest different
+	float alpha = (weight_type==WEIGHT_DTFORM? 0.0f:0.35f); //Experimental results suggest different
 												//weights for different weight masts
 	Mat newface = fdr.Blend(dst_face, src_face, mask, alpha);	
 
